@@ -1,3 +1,6 @@
+# custom
+.cache/
+dist/
 # Logs
 logs
 *.log
