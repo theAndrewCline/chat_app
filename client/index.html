@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Message App</title>
+</head>
+<body>
+  <ul id="messageHistory">
+    <!-- <li>
+      Andrew: I'm hungry ...
+      <p>sent: 10:00am</p>
+    </li>
+    <li>
+      Jacob: Me too
+      <p>sent: 10:01am</p>
+    </li> -->
+  </ul>
+  <input id="messageInput">
+  <button id="sendMessage">send</button>
+  <script>
+    const author = prompt('What is your username?')
+    alert(`Welcome, ${author}`)
+
+    const ws = new WebSocket('ws://localhost:9001')
+    ws.addEventListener('message', evt => {
+      const messageObject = JSON.parse(evt.data)
+      if (messageObject.type === 'history') {
+        renderHistory(messageObject.history)
+      }
+      if (messageObject.type === 'message') {
+        renderNewMessage(messageObject.message)
+      }
+    })
+
+    sendMessage.addEventListener('click', evt => {
+      const newMessage = {
+        type: 'message',
+        message: {
+          author,
+          timestamp: new Date(),
+          text: messageInput.value
+        }
+      }
+
+      ws.send(JSON.stringify(newMessage))
+      // ws.send(JSON.stringify(newMessage))
+      messageInput.value = ''
+      messageInput.focus()
+    })
+
+    const renderMessageHTML = message => `
+      <li>
+        ${message.author}: ${message.text}
+        <p>sent: ${message.timestamp}</p>
+      </li>
+    `
+
+    const renderNewMessage = newMessage => {
+      messageHistory.insertAdjacentHTML('beforeend', renderMessageHTML(newMessage))
+    }
+
+    const renderHistory = history => {
+      messageHistory.innerHTML = history
+        .map(x => x.message)
+        .map(renderMessageHTML)
+        .join('')
+    }
+  </script>
+</body>
+</html>
