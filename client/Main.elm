@@ -1,7 +1,12 @@
-module Main exposing (main)
+port module Main exposing (..)
 
 import Browser exposing (..)
 import Html exposing (..)
+import Html.Attributes exposing (..)
+import Http exposing (Error(..))
+import Json.Decode as Decode
+import Json.Encode as Encode
+import Time
 
 
 main =
@@ -13,37 +18,68 @@ main =
         }
 
 
+port history : (Encode.Value -> msg) -> Sub msg
+
+
 
 -- MODEL
 
 
 type alias Model =
-    { history : List Message }
-
-
-type alias Message =
-    {}
+    { history : List Int
+    , errorMsg : Maybe Decode.Error
+    }
 
 
 
+-- type alias Message =
+--     { author : String
+--     , content : String
+--     , timestamp : Time.Posix
+--     }
 --INIT
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { history = []
-      }
-    , Cmd.none
-    )
+historyDecoder : Decode.Decoder (List Int)
+historyDecoder =
+    Decode.list Decode.int
+
+
+init : Encode.Value -> ( Model, Cmd Msg )
+init historyFlag =
+    case Decode.decodeValue historyDecoder historyFlag of
+        Ok initHistory ->
+            ( { history = initHistory
+              , errorMsg = Nothing
+              }
+            , Cmd.none
+            )
+
+        Err err ->
+            ( { history = [ 5, 6, 7 ]
+              , errorMsg = Just err
+              }
+            , Cmd.none
+            )
 
 
 
 -- SUBSCRIPTIONS
 
 
+updateHistory : Decode.Value -> Msg
+updateHistory updatedHistory =
+    case Decode.decodeValue historyDecoder updatedHistory of
+        Ok newHistory ->
+            UpdateHistory newHistory
+
+        Err err ->
+            NoOp
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    history updateHistory
 
 
 
@@ -52,7 +88,7 @@ subscriptions model =
 
 type Msg
     = NoOp
-    | UpdateHistory
+    | UpdateHistory (List Int)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -61,8 +97,8 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        UpdateHistory ->
-            ( model, Cmd.none )
+        UpdateHistory newHistory ->
+            ( { model | history = newHistory }, Cmd.none )
 
 
 
@@ -71,6 +107,12 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ span [] [ text "Hello There" ]
+    div [ class "container" ]
+        [ ul [ id "messageHistory" ]
+            [ li [] [ text "hello" ]
+            ]
+        , div [ class "input-container" ]
+            [ input [ id "messageInput" ] []
+            , button [ id "sendMessage" ] [ text "send" ]
+            ]
         ]
