@@ -5,7 +5,6 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http exposing (Error(..))
 import Json.Decode as Decode
-import Json.Encode as Encode
 import Time
 
 
@@ -18,7 +17,7 @@ main =
         }
 
 
-port history : (Encode.Value -> msg) -> Sub msg
+port history : (Decode.Value -> msg) -> Sub msg
 
 
 
@@ -45,7 +44,7 @@ historyDecoder =
     Decode.list Decode.int
 
 
-init : Encode.Value -> ( Model, Cmd Msg )
+init : Decode.Value -> ( Model, Cmd Msg )
 init historyFlag =
     case Decode.decodeValue historyDecoder historyFlag of
         Ok initHistory ->
