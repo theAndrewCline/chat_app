@@ -1,6 +1,10 @@
 import { Elm } from './Main.elm'
 
-let history = [1, 2, 3]
+let history = [{
+  author: "Andrew",
+  content: "I'm Hungry",
+  timestamp: Date.now()
+}]
 
 const app = Elm.Main.init({
   node: document.querySelector('main'),
@@ -8,7 +12,12 @@ const app = Elm.Main.init({
 })
 
 setTimeout(() => {
-  app.ports.history.send([10, 11, 12])
+  history.push({
+    author: "Jacob",
+    content: "Me Too...",
+    timestamp: Date.now()
+  })
+  app.ports.history.send(history)
 }, 4000)
 
 // const ws = new WebSocket('ws://localhost9001')

@@ -17,31 +17,42 @@ main =
         }
 
 
-port history : (Decode.Value -> msg) -> Sub msg
-
-
 
 -- MODEL
 
 
 type alias Model =
-    { history : List Int
+    { history : List Message
     , errorMsg : Maybe Decode.Error
     }
 
 
-
--- type alias Message =
---     { author : String
---     , content : String
---     , timestamp : Time.Posix
---     }
---INIT
+type alias Message =
+    { author : String
+    , content : String
+    , timestamp : Int
+    }
 
 
-historyDecoder : Decode.Decoder (List Int)
+
+-- JSON DECODERS
+
+
+historyDecoder : Decode.Decoder (List Message)
 historyDecoder =
-    Decode.list Decode.int
+    Decode.list messageDecoder
+
+
+messageDecoder : Decode.Decoder Message
+messageDecoder =
+    Decode.map3 Message
+        (Decode.field "author" Decode.string)
+        (Decode.field "content" Decode.string)
+        (Decode.field "timestamp" Decode.int)
+
+
+
+--INIT
 
 
 init : Decode.Value -> ( Model, Cmd Msg )
@@ -55,7 +66,7 @@ init historyFlag =
             )
 
         Err err ->
-            ( { history = [ 5, 6, 7 ]
+            ( { history = []
               , errorMsg = Just err
               }
             , Cmd.none
@@ -64,6 +75,14 @@ init historyFlag =
 
 
 -- SUBSCRIPTIONS
+
+
+port history : (Decode.Value -> msg) -> Sub msg
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    history updateHistory
 
 
 updateHistory : Decode.Value -> Msg
@@ -76,18 +95,13 @@ updateHistory updatedHistory =
             NoOp
 
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    history updateHistory
-
-
 
 -- UPDATE
 
 
 type Msg
     = NoOp
-    | UpdateHistory (List Int)
+    | UpdateHistory (List Message)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -107,11 +121,25 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "container" ]
-        [ ul [ id "messageHistory" ]
-            [ li [] [ text "hello" ]
-            ]
+        [ viewHistory model.history
         , div [ class "input-container" ]
             [ input [ id "messageInput" ] []
             , button [ id "sendMessage" ] [ text "send" ]
             ]
         ]
+
+
+viewHistory : List Message -> Html Msg
+viewHistory historyModel =
+    ul [ id "messageHistory" ]
+        (List.map
+            (\message ->
+                viewMessage message
+            )
+            historyModel
+        )
+
+
+viewMessage : Message -> Html Msg
+viewMessage message =
+    li [] [ text message.content ]
