@@ -2,7 +2,7 @@ import { Elm } from './Main.elm'
 
 let history = [{
   author: "Andrew",
-  content: "I'm Hungry",
+  text: "I'm Hungry",
   timestamp: Date.now()
 }]
 
@@ -14,7 +14,7 @@ const app = Elm.Main.init({
 setTimeout(() => {
   history.push({
     author: "Jacob",
-    content: "Me Too...",
+    text: "Me Too...",
     timestamp: Date.now()
   })
   app.ports.history.send(history)

@@ -29,7 +29,7 @@ type alias Model =
 
 type alias Message =
     { author : String
-    , content : String
+    , text : String
     , timestamp : Int
     }
 
@@ -47,7 +47,7 @@ messageDecoder : Decode.Decoder Message
 messageDecoder =
     Decode.map3 Message
         (Decode.field "author" Decode.string)
-        (Decode.field "content" Decode.string)
+        (Decode.field "text" Decode.string)
         (Decode.field "timestamp" Decode.int)
 
 
@@ -77,12 +77,12 @@ init historyFlag =
 -- SUBSCRIPTIONS
 
 
-port history : (Decode.Value -> msg) -> Sub msg
-
-
 subscriptions : Model -> Sub Msg
 subscriptions model =
     history updateHistory
+
+
+port history : (Decode.Value -> msg) -> Sub msg
 
 
 updateHistory : Decode.Value -> Msg
@@ -142,4 +142,11 @@ viewHistory historyModel =
 
 viewMessage : Message -> Html Msg
 viewMessage message =
-    li [] [ text message.content ]
+    li []
+        [ div [ class "line" ] []
+        , div []
+            [ span [ class "author" ] [ text message.author ]
+            , span [ class "timestamp" ] [ text (String.fromInt message.timestamp) ]
+            ]
+        , div [] [ text message.text ]
+        ]
