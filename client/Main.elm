@@ -3,6 +3,7 @@ port module Main exposing (..)
 import Browser exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Http exposing (Error(..))
 import Json.Decode as Decode
 import Time
@@ -23,7 +24,9 @@ main =
 
 type alias Model =
     { history : List Message
+    , textInput : String
     , errorMsg : Maybe Decode.Error
+    , message : String
     }
 
 
@@ -60,14 +63,18 @@ init historyFlag =
     case Decode.decodeValue historyDecoder historyFlag of
         Ok initHistory ->
             ( { history = initHistory
+              , textInput = ""
               , errorMsg = Nothing
+              , message = ""
               }
             , Cmd.none
             )
 
         Err err ->
             ( { history = []
+              , textInput = ""
               , errorMsg = Just err
+              , message = ""
               }
             , Cmd.none
             )
@@ -102,6 +109,8 @@ updateHistory updatedHistory =
 type Msg
     = NoOp
     | UpdateHistory (List Message)
+    | UpdateTextInput String
+    | SendMessage
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -113,6 +122,12 @@ update msg model =
         UpdateHistory newHistory ->
             ( { model | history = newHistory }, Cmd.none )
 
+        UpdateTextInput string ->
+            ( { model | textInput = string }, Cmd.none )
+
+        SendMessage ->
+            ( { model | message = model.textInput, textInput = "" }, Cmd.none )
+
 
 
 -- VIEW
@@ -123,8 +138,14 @@ view model =
     div [ class "container" ]
         [ viewHistory model.history
         , div [ class "input-container" ]
-            [ input [ id "messageInput" ] []
-            , button [ id "sendMessage" ] [ text "send" ]
+            [ input
+                [ id "messageInput"
+                , onInput UpdateTextInput
+                , onEnter SendMessage
+                ]
+                [ text model.textInput ]
+
+            -- , button [ id "sendMessage"] [ text "send" ]
             ]
         ]
 
@@ -150,3 +171,16 @@ viewMessage message =
             ]
         , div [] [ text message.text ]
         ]
+
+
+onEnter : Msg -> Attribute Msg
+onEnter msg =
+    let
+        isEnter code =
+            if code == 13 then
+                Decode.succeed msg
+
+            else
+                Decode.fail "not ENTER"
+    in
+    on "keydown" (Decode.andThen isEnter keyCode)

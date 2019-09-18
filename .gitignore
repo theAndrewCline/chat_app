@@ -1,6 +1,7 @@
 # custom
 .cache/
 dist/
+elm-stuff/
 # Logs
 logs
 *.log
