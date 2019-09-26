@@ -1,26 +1,23 @@
-import { Elm } from './Main.elm'
+import { Elm } from './src/Main.elm'
 
-let history = [{
-  author: "Andrew",
-  text: "I'm Hungry",
-  timestamp: Date.now()
-}]
+let author = prompt('what is your name?')
 
 const app = Elm.Main.init({
   node: document.querySelector('main'),
-  flags: history
+  flags: author
 })
 
-setTimeout(() => {
-  history.push({
-    author: "Jacob",
-    text: "Me Too...",
-    timestamp: Date.now()
-  })
-  app.ports.history.send(history)
-}, 4000)
+const ws = new WebSocket('ws://localhost:9001')
+ws.addEventListener('message', (message) => {
+  const json = JSON.parse(message.data)
+  if (json.type === 'history') {
+    app.ports.history.send(json.history)
+  }
+})
 
-// const ws = new WebSocket('ws://localhost9001')
-// ws.addEventListener('message', (json) => {
-  // app.ports.history.send(json)
-// })
+app.ports.sendWSMsg.subscribe((message) => {
+  const newMessage = { ...message, timestamp: Date.now() }
+  ws.send(JSON.stringify(newMessage))
+})
+
+

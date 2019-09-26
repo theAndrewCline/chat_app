@@ -21,8 +21,10 @@ wsServer.on('connection', socket => {
     if (validMessage(message)) {
       addMessageToHistory(JSON.parse(message))
 
+      console.log(history)
+
       wsServer.clients.forEach(client => {
-        client.send(message)
+        client.send(JSON.stringify({ type: 'history', history }))
       })
     }
   })
@@ -31,4 +33,4 @@ wsServer.on('connection', socket => {
 })
 
 
-server.listen(9001, () => { console.log('server is over 9000')})
+server.listen(9001, () => { console.log('server is over 9000') })

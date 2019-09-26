@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http exposing (Error(..))
 import Json.Decode as Decode
+import Json.Encode as Encode
 import Time
 
 
@@ -25,8 +26,8 @@ main =
 type alias Model =
     { history : List Message
     , textInput : String
+    , author : String
     , errorMsg : Maybe Decode.Error
-    , message : String
     }
 
 
@@ -58,26 +59,15 @@ messageDecoder =
 --INIT
 
 
-init : Decode.Value -> ( Model, Cmd Msg )
-init historyFlag =
-    case Decode.decodeValue historyDecoder historyFlag of
-        Ok initHistory ->
-            ( { history = initHistory
-              , textInput = ""
-              , errorMsg = Nothing
-              , message = ""
-              }
-            , Cmd.none
-            )
-
-        Err err ->
-            ( { history = []
-              , textInput = ""
-              , errorMsg = Just err
-              , message = ""
-              }
-            , Cmd.none
-            )
+init : String -> ( Model, Cmd Msg )
+init authorFlag =
+    ( { history = []
+      , textInput = ""
+      , errorMsg = Nothing
+      , author = authorFlag
+      }
+    , Cmd.none
+    )
 
 
 
@@ -90,6 +80,9 @@ subscriptions model =
 
 
 port history : (Decode.Value -> msg) -> Sub msg
+
+
+port sendWSMsg : { author : String, text : String } -> Cmd msg
 
 
 updateHistory : Decode.Value -> Msg
@@ -126,7 +119,9 @@ update msg model =
             ( { model | textInput = string }, Cmd.none )
 
         SendMessage ->
-            ( { model | message = model.textInput, textInput = "" }, Cmd.none )
+            ( { model | textInput = "" }
+            , sendWSMsg { author = model.author, text = model.textInput }
+            )
 
 
 
@@ -140,12 +135,11 @@ view model =
         , div [ class "input-container" ]
             [ input
                 [ id "messageInput"
+                , value model.textInput
                 , onInput UpdateTextInput
-                , onEnter SendMessage
                 ]
-                [ text model.textInput ]
-
-            -- , button [ id "sendMessage"] [ text "send" ]
+                []
+            , button [ class "input-button", onClick SendMessage ] [ text "send" ]
             ]
         ]
 
@@ -173,14 +167,14 @@ viewMessage message =
         ]
 
 
-onEnter : Msg -> Attribute Msg
-onEnter msg =
-    let
-        isEnter code =
-            if code == 13 then
-                Decode.succeed msg
 
-            else
-                Decode.fail "not ENTER"
-    in
-    on "keydown" (Decode.andThen isEnter keyCode)
+-- onEnter : sendWSMsg -> Attribute Msg
+-- onEnter function =
+--     let
+--         isEnter code =
+--             if code == 13 then
+--                 Decode.succeed function
+--             else
+--                 Decode.fail "not ENTER"
+--     in
+--     on "keydown" (Decode.andThen isEnter keyCode)
